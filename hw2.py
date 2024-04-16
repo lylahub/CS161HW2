@@ -80,7 +80,20 @@ def DFID(TREE, depth):
 # FINAL_STATE takes a single argument S, the current state, and returns True if it
 # is the goal state (True, True, True, True) and False otherwise.
 def FINAL_STATE(S):
-    raise NotImplementedError
+    """
+    Check if the current state is the goal state
+    
+    Input:
+        S (tuple): position of Homer, baby, dog, and poison
+    
+    Output:
+        bool: Returns True if the current state is the goal state,
+              indicating all entities are on the west side of the river
+    
+    """
+    if S == (True, True, True, True):
+        return True
+    return False
 
 
 # NEXT_STATE returns the state that results from applying an operator to the
@@ -94,7 +107,49 @@ def FINAL_STATE(S):
 # NOTE that NEXT_STATE returns a list containing the successor state (which is
 # itself a tuple)# the return should look something like [(False, False, True, True)].
 def NEXT_STATE(S, A):
-    raise NotImplementedError
+    """
+    Calculate the next state resulting from moving a specified entity across the river
+
+    Input:
+        S (tuple): The current state tuple (homer, baby, dog, poison) indicating which side
+                   (True for west, False for east) each entity is on
+        A (str): The action specifying which entity or entities to move, with possible values:
+                 'h' for Homer alone, 'b' for Homer with the baby, 'd' for Homer with the dog,
+                 and 'p' for Homer with the poison
+
+    Output:
+        list of tuple: Returns a list containing the new state tuple after the move. If the move
+                       is invalid or impossible due to safety rules or because entities are not
+                       on the same side, it returns an empty list ([])
+    """
+    homer, baby, dog, poison = S
+    if A == 'h':
+        # Homer moves
+        if (baby == dog == (not homer)) or (baby == poison == (not homer)):
+            return []
+        return [(not homer, baby, dog, poison)]
+    elif A == 'b':
+        # Homer + baby
+        if homer != baby:
+            return []
+        return [(not homer, not baby, dog, poison)]
+    elif A == 'd':
+        # Homer + dog
+        if homer != dog:
+            return []
+        # moving the dog should not leave the baby with poison alone
+        if baby == poison and baby != homer:
+            return []
+        return [(not homer, baby, not dog, poison)]
+    elif A == 'p':
+        # Homer + poison
+        if homer != poison:
+            return []
+        # moving poison should not leave the baby with the dog alone
+        if baby == dog and baby != homer:
+            return []
+        return [(not homer, baby, dog, not poison)]
+    return []
 
 
 # SUCC_FN returns all of the possible legal successor states to the current
@@ -102,7 +157,28 @@ def NEXT_STATE(S, A):
 # returns a list of each state that can be reached by applying legal operators
 # to the current state.
 def SUCC_FN(S):
-    raise NotImplementedError
+    """
+    Generate all possible legal successor states from the current state in the 
+    homer-baby-dog-poison river crossing problem
+
+    Input:
+        S (tuple): The current state tuple (homer, baby, dog, poison), where each element
+                   represents the presence of the respective entity on the west side of 
+                   the river (True for west, False for east)
+
+    Output:
+        list of tuples: A list of all legal states that can be reached from the current state
+                        by applying one of the allowable moves. Each state is represented as 
+                        a tuple (homer, baby, dog, poison)
+    """
+    possible_legal_successor_states = []
+    for move in ('h', 'b', 'd', 'p'):
+        # Get the next state for the current move, returns a list of states
+        possible_state = NEXT_STATE(S, move)
+        # If there are valid next states, extend the list
+        if possible_state:
+            possible_legal_successor_states.extend(possible_state)
+    return possible_legal_successor_states
 
 
 # ON_PATH checks whether the current state is on the stack of states visited by
@@ -110,7 +186,26 @@ def SUCC_FN(S):
 # stack of states visited by DFS (STATES). It returns True if S is a member of
 # STATES and False otherwise.
 def ON_PATH(S, STATES):
-    raise NotImplementedError
+    """
+    Check if the current state is already in the list of states visited during
+    the depth-first search
+
+    Input:
+        S (tuple): The current state to be checked. The state is a tuple like
+                   (homer, baby, dog, poison) indicating the side (True for west,
+                   False for east) of the river each entity is on
+        STATES (list of tuples): A stack of states that represents the path of
+                   states visited so far in the depth-first search
+
+    Output:
+        bool: Returns True if the state `S` is already in the `STATES` list, indicating
+              that this state has been visited in the current path of the DFS. Returns
+              False if the state `S` is not found in `STATES`, indicating that it has
+              not been visited in the current search path
+    """
+    if S in STATES:
+        return True
+    return False
 
 
 # MULT_DFS is a helper function for DFS_SOL. It takes two arguments: a list of
@@ -123,7 +218,31 @@ def ON_PATH(S, STATES):
 # complete path from the initial state to the goal state. Otherwise, it returns
 # [].
 def MULT_DFS(STATES, PATH):
-    raise NotImplementedError
+    """
+    Perform a multi-branch DFS from multiple starting points to find a path to the goal state
+
+    Inputs:
+        STATES (list of tuples): A list of legal successor states from the current end state of the path
+
+        PATH (list of tuples): A stack (first-in, first-out list) of states from the initial state to the 
+                               most recently explored state
+
+    Output:
+        list of tuples: If a path to the goal state is found through any of the successors, returns the 
+                        complete path including the initial state and the goal state
+    """
+    for state in STATES:
+        # curr_state = goal state
+        if FINAL_STATE(state):
+            return PATH + [state]
+        # no cycle: recursively search from these successors
+        if state not in PATH:
+            successor_states = SUCC_FN(state)
+            new_path = MULT_DFS(successor_states, PATH + [state])
+            if new_path:
+                return new_path
+    # return an empty list for no path
+    return []
 
 
 # DFS_SOL does a depth first search from a given state to the goal state. It
@@ -135,4 +254,26 @@ def MULT_DFS(STATES, PATH):
 # ensuring that the depth-first search does not revisit a node already on the
 # search path (i.e., S is not on PATH).
 def DFS_SOL(S, PATH):
-    raise NotImplementedError
+    """
+    Perform a depth-first search (DFS) from a specified state to the goal state
+
+    Inputs:
+        S (tuple): The current state from which to start the DFS, represented as a tuple
+                   (homer, baby, dog, poison)
+                   
+        PATH (list of tuples): The path from the initial state to the current state `S`. 
+                               used to track the route taken in the DFS to prevent cycles
+                               If `S` is the initial state, PATH should be empty []
+
+    Output:
+        list of tuples: Returns the path from the initial state to the goal state if a valid
+                        route is found
+    """
+    if FINAL_STATE(S):
+        return PATH + [S]
+    # no revisiting
+    if ON_PATH(S, PATH):  
+        return []
+    # explore successor states of S
+    successor_states = SUCC_FN(S)
+    return MULT_DFS(successor_states, PATH + [S])
