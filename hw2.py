@@ -1,4 +1,4 @@
-# Q1 BFS(TREE):
+# Q1 BFS
 # input: takes in tree
 # output: tuple of leaf nodes in order of left-to-right breadth-first search
 def BFS(TREE):
@@ -19,10 +19,22 @@ def BFS(TREE):
 
 
 # Q2 DFS
-
+# input: tree
+# output: tuple of leaf nodes in the order of left-to-right depth-first search
+def DFS(TREE):
+    # root only tree
+    if type(TREE) != tuple:
+        return (TREE, )
+    # use tuple to store result
+    search_result = ()
+    for subtree in TREE:
+        # apply DFS on each subtree recursively
+        search_result += DFS(subtree)
+    return search_result
 
 
 # Q3 DFID
+# aux func: 
 
 
 # Q4
