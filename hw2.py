@@ -34,7 +34,25 @@ def DFS(TREE):
 
 
 # Q3 DFID
-# aux func: 
+# aux_DFID
+# input: TREE with max_depth = depth
+# output: tuple of leaf nodes from right-to-left DFS with maximum depth = depth
+def aux_DFID(TREE, depth):
+    if depth < 0:
+        return ()
+    if type(TREE) != tuple:
+        return (TREE, )
+    search_result = ()
+    for subtree in reversed(TREE):
+        search_result += aux_DFID(subtree, depth-1)
+    return search_result
+
+# DFID
+def DFID(TREE, depth):
+    search_result = ()
+    for d in range(depth + 1):
+        search_result += aux_DFID(TREE, d)
+    return search_result
 
 
 # Q4
